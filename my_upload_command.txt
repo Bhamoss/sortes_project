@@ -18,7 +18,7 @@ programmer
 avrdude is program to load
 -v verbose output
 -p MCU type
--c what will program your mcu = how will you put the binary on you hardware. Uses info from the config file 
+-c what will program your mcu = how will you put the binary on you hardware. Uses info from the config file . I think i can just say serial and remove -C
 -C the config file for you programmer
 -P the port to which you attach, the usb device (for serial port default is /dev/cuaa0)
 -b the baud rate
