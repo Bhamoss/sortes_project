@@ -1,1 +1,24 @@
 C:\Program Files (x86)\Arduino\hardware\tools\avr/bin/avrdude -CC:\Program Files (x86)\Arduino\hardware\tools\avr/etc/avrdude.conf -v -patmega32u4 -cavr109 -PCOM8 -b57600 -D -Uflash:w:C:\Users\Thomas Bamelis\AppData\Local\Temp\arduino_build_343014/BlinkWithoutDelay.ino.hex:i 
+
+/*
+ config file entry for avr109
+ id = "Atmel Appnot"
+*/
+
+
+
+/* 
+avrdude is program to load
+-v verbose output
+-p MCU type
+-c what will program your mcu = how will you put the binary on you hardware. Uses info from the config file 
+-C the config file for you programmer
+-P the port to which you attach, the usb device (for serial port default is /dev/cuaa0)
+-b the baud rate
+-U is used to perform a memory operation: -U memory_type:operation:filename[:format]
+so -U flash:w:bin.hex  writes bin.hex to flash
+format is to indicate which filetype = format you file is in, but can be autodetected. i is for indicating the file is a .hex file
+-D disables auto erase. By default the flash of the device is erased before writing something new. 
+ATxmega devices can use page erase so no explicit erase is required, so I guess this is an optimisation so you don't need to wait for a flash
+*/
+avrdude -v -p atmega32u4 -c avr109 -P COM8 -b 57600 -D -U flash:w:/home/thomas/projects/../binary.hex:i 
