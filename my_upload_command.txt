@@ -37,3 +37,4 @@ sudo avrdude -v -p atmega32u4 -c avr109 -P /dev/ttyACM0 -b 57600 -D -U flash:w:B
 but on ubuntu you had to disable some service, which broke my computer and I had to reinstall my os...
 systemctl stop ModemManager.service
 
+!!!! THE DEVICE IS EQUIVALENT TO A ADAFRUIT FEATHER 32U4 for uploading!!!
