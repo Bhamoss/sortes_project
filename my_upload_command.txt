@@ -31,3 +31,11 @@ format is to indicate which filetype = format you file is in, but can be autodet
 ATxmega devices can use page erase so no explicit erase is required, so I guess this is an optimisation so you don't need to wait for a flash
 */
 avrdude -C avrdude.conf -v -p atmega32u4 -c avr109 -P /dev/ttyACM0 -b 57600 -D -U flash:w:/home/thomas/projects/../binary.hex:i 
+
+
+// so after some fideling the best I could do was
+sudo avrdude -v -p atmega32u4 -c avr109 -P /dev/ttyACM0 -b 57600 -D -U flash:w:BlinkWithoutDelay.ino.hex:i
+
+but on ubuntu you had to disable some service, which broke my computer and I had to reinstall my os...
+systemctl stop ModemManager.service
+
