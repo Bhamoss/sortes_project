@@ -1,19 +1,19 @@
 // including the avr library
 #include <avr/io.h>
 
+// the speed of our cpu has to be set for the delay to work like it should
+#define F_CPU 8000000
 // including for delay
 #include <util/delay.h>
 
 
-// the speed of our cpu has to be set for the delay to work like it should
-#define F_CPU 8000000
 
 //TODO: set to the correct ports and bits of the led
 // so LED_BUILTIN printed 13
 // the bsfrance datasheet has arduino pin 13 on PC7
-#define LED PB0
-#define LED_PORT PORTB
-#define LED_DDR DDRB
+#define LED PC7
+#define LED_PORT PORTC
+#define LED_DDR DDRC
 
 // macros for more clear bit operations
 #define BV(x)   (1 << x)
@@ -46,7 +46,7 @@ int main(void) {
             // toggle the led
             toggleBit(LED_PORT, LED);
             // wait a second
-            _delay_ms(100);
+            _delay_ms(5000);
         }
 
 

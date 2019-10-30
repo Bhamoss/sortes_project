@@ -40,3 +40,6 @@ but on ubuntu you had to disable some service, which broke my computer and I had
 systemctl stop ModemManager.service
 
 !!!! THE DEVICE IS EQUIVALENT TO A ADAFRUIT FEATHER 32U4 for uploading!!!
+\n avr-gcc -Wall -g -Os -mmcu=atmega32u4 -o hello_avr_world.bin hello_avr_world.c \n
+avr-objcopy -j .text -j .data -O ihex hello_avr_world.bin hello_avr_world.hex
+sudo avrdude -v -p atmega32u4 -c avr109 -P /dev/ttyACM0  -b 57600 -U flash:w:hello_avr_world.hex:i
