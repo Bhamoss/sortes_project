@@ -1,5 +1,7 @@
 C:\Program Files (x86)\Arduino\hardware\tools\avr/bin/avrdude -CC:\Program Files (x86)\Arduino\hardware\tools\avr/etc/avrdude.conf -v -patmega32u4 -cavr109 -PCOM8 -b57600 -D -Uflash:w:C:\Users\Thomas Bamelis\AppData\Local\Temp\arduino_build_343014/BlinkWithoutDelay.ino.hex:i 
 
+& 'C:\Program Files (x86)\Arduino\hardware\tools\avr\bin\avrdude.exe' -C 'C:\Program Files (x86)\Arduino\hardware\tools\avr\etc\avrdude.conf' -v -p atmega32u4 -c avr109 -P COM109 -b 57600 -D -U flash:w:'C:\Users\Thomas Bamelis\AppData\Local\Temp\arduino_build_981010\BlinkWithoutDelay.ino.hex':i
+
 /*
  config file entry for avr109
 
