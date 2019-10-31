@@ -1,17 +1,19 @@
 #define __AVR_ATmega32U4__
-// including the avr library
+// define which mcu for the IDE to know 
+
+// including the avr io library
 #include <avr/io.h>
 
 // the speed of our cpu has to be set for the delay to work like it should
+// you have to define this before importing the library
 #define F_CPU 8000000
 // including for delay
 #include <util/delay.h>
 
 
 
-//TODO: set to the correct ports and bits of the led
-// so LED_BUILTIN printed 13
-// the bsfrance datasheet has arduino pin 13 on PC7
+
+// LED is on PC7
 #define LED PC7
 #define LED_PORT PORTC
 #define LED_DDR DDRC
@@ -22,6 +24,11 @@
 #define clearBit(P,B) P &= ~BV(B)
 #define toggleBit(P,B) P ^= BV(B)
 
+/******************************************************************************
+ * 
+ * Using this guid: https://appelsiini.net/2011/simple-usart-with-avr-libc/
+ * 
+ ******************************************************************************/
 
 /**
  * main with no parameters
@@ -57,13 +64,4 @@ int main(void) {
 }
 
 
-/**
- * Things i learned about the board:
- * 
- *  ATMegas have 3 timers/counters.
- * 
- * It has built in hardware for all comm protocols we have seen.
- * ADC = convert analog to digital
- * It has EEPROM which is non volatile.
- * Our MCU runs at 8 MHz and is 3.3
- **/
+

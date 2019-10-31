@@ -1,3 +1,4 @@
+#define __AVR_ATmega32U4__
 // including the avr library
 #include <avr/io.h>
 
