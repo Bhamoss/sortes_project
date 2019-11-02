@@ -192,13 +192,20 @@ int main(void) {
         stdin  = &uart_input;
         
         char input;
+        char inputString[6000];
 
         //------- loop ---------//
         while (1) {
             // wait a second
-            puts("Hello world!");
-            input = getchar();
-            printf("You wrote %c\n", input);
+            puts("Hello world! Write something!\n");
+            
+
+
+            // gets a line
+            gets(inputString);
+            printf("\nYou wrote %s\n", inputString);
+            
+            
             
 
             
