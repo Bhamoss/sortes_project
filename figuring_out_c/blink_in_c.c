@@ -47,7 +47,7 @@ int main(void) {
             // toggle the led
             toggleBit(LED_PORT, LED);
             // wait a second
-            _delay_ms(5000);
+            _delay_ms(1000);
         }
 
 

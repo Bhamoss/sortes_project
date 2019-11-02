@@ -30,6 +30,12 @@
 #include <stdio.h>
 
 
+// setting up led, I use it for debugging :)
+#define LED PC7
+#define LED_PORT PORTC
+#define LED_DDR DDRC
+
+
 
 // macros for more clear bit operations
 #define BV(x)   (1 << x)
@@ -185,18 +191,28 @@ int main(void) {
          **/ 
 
 
-        serial_init();
+        serial_Init();
 
         // redirecting stdio 
         stdout = &uart_output;
         stdin  = &uart_input;
+
+        // setting up led as output
+        setBit(LED_DDR, LED);
         
-        char input;
         char inputString[6000];
 
         //------- loop ---------//
         while (1) {
-            // wait a second
+            clearBit(LED_PORT, LED);
+            // signaling start
+            for(int i; i < 30; i++){
+                toggleBit(LED_PORT, LED);
+                _delay_ms(500);
+            }
+            clearBit(LED_PORT, LED);
+
+
             puts("Hello world! Write something!\n");
             
 
@@ -205,6 +221,11 @@ int main(void) {
             gets(inputString);
             printf("\nYou wrote %s\n", inputString);
             
+            // rapidly flashin for 5 seconds to indicate we got the string
+            for(int i; i < 100; i++){
+                toggleBit(LED_PORT, LED);
+                _delay_ms(50);
+            }
             
             
 
