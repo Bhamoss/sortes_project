@@ -1,33 +1,56 @@
 {
     "configurations": [
         {
-            "name": "Win32",
-            "includePath": [
-                "${workspaceFolder}/**",
-                "/home/thomas/Documents/BSFrance/**"
-            ],
-            "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE"
-            ],
-            "windowsSdkVersion": "10.0.17763.0",
-            "compilerPath": "/usr/bin/avr-gcc",
-            "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "msvc-x64"
+            "name": "!!! WARNING !!! AUTO-GENERATED FILE, PLEASE DO NOT MODIFY IT AND USE https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags"
         },
         {
-            "name": "Linux",
+            "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**",
-                "/home/thomas/Documents/BSFrance/**"
+                "c:/Users/xander/Documents/Kuleuven/2deMaster/EmbeddedSystems/sortes_project/include",
+                "c:/Users/xander/Documents/Kuleuven/2deMaster/EmbeddedSystems/sortes_project/src",
+                "C:/Users/xander/.platformio/packages/framework-arduinoavr/cores/arduino",
+                "C:/Users/xander/.platformio/packages/framework-arduinoavr/variants/lora32u4II",
+                "C:/Users/xander/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/EEPROM/src",
+                "C:/Users/xander/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/HID/src",
+                "C:/Users/xander/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SPI/src",
+                "C:/Users/xander/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SoftwareSerial/src",
+                "C:/Users/xander/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/Wire/src",
+                "C:/Users/xander/.platformio/packages/tool-unity",
+                ""
             ],
-            "defines": [],
-            "compilerPath": "/usr/bin/avr-gcc",
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "c:/Users/xander/Documents/Kuleuven/2deMaster/EmbeddedSystems/sortes_project/include",
+                    "c:/Users/xander/Documents/Kuleuven/2deMaster/EmbeddedSystems/sortes_project/src",
+                    "C:/Users/xander/.platformio/packages/framework-arduinoavr/cores/arduino",
+                    "C:/Users/xander/.platformio/packages/framework-arduinoavr/variants/lora32u4II",
+                    "C:/Users/xander/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/EEPROM/src",
+                    "C:/Users/xander/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/HID/src",
+                    "C:/Users/xander/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SPI/src",
+                    "C:/Users/xander/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SoftwareSerial/src",
+                    "C:/Users/xander/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/Wire/src",
+                    "C:/Users/xander/.platformio/packages/tool-unity",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=40003",
+                "ARDUINO_AVR_FEATHER32U4",
+                "F_CPU=8000000L",
+                "ARDUINO_ARCH_AVR",
+                "ARDUINO=10805",
+                "USB_VID=0x239A",
+                "USB_PID=0x800C",
+                "USB_PRODUCT=\"Feather 32u4\"",
+                "USB_MANUFACTURER=\"BSFrance\"",
+                "__AVR_ATmega32U4__",
+                ""
+            ],
+            "intelliSenseMode": "clang-x64",
             "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64"
+            "cppStandard": "c++11",
+            "compilerPath": "\"C:/Users/xander/.platformio/packages/toolchain-atmelavr/bin/avr-gcc.exe\" -mmcu=atmega32u4"
         }
     ],
     "version": 4
