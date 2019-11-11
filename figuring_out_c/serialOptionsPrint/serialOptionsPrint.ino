@@ -22,7 +22,7 @@
 */
 
 #include <avr/io.h>
-
+void establishContact();
 char inByte[300];         // incoming serial byte
 
 void setup() {
@@ -34,11 +34,26 @@ void setup() {
 
 
   establishContact();  // send a byte to establish contact until receiver responds
+  Serial.println("");
+  Serial.println("USCSRA");
+  Serial.println(UCSR1A, BIN);
+  Serial.println("USCSRB");
+  Serial.println(UCSR1B, BIN);
+  Serial.println("USCSRC");
+  Serial.println(UCSR1C, BIN);
+  Serial.println("TWCR");
+  Serial.println(TWCR, BIN);
+  Serial.println("SPCR");
+  Serial.println(SPCR, BIN);
+
 }
 
 void loop() {
+  
   // if we get a valid byte, read analog ins:
   if (Serial.available() > 0) {
+    
+    
     // get incoming byte:
     Serial.readBytesUntil('\n', inByte, 300);
 

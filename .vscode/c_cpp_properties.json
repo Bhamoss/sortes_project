@@ -2,20 +2,33 @@
     "configurations": [
         {
             "name": "Win32",
-            "includePath": [
-                "${workspaceFolder}/**",
-                "/home/thomas/Documents/BSFrance/**"
-            ],
+            "includePath": [],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "c:/Users/Thomas Bamelis/Documents/GitHub/sortes_project/include",
+                    "c:/Users/Thomas Bamelis/Documents/GitHub/sortes_project/src",
+                    "C:/Users/Thomas Bamelis/.platformio/packages/framework-arduinoavr/cores/arduino",
+                    "C:/Users/Thomas Bamelis/.platformio/packages/framework-arduinoavr/variants/lora32u4II",
+                    "C:/Users/Thomas Bamelis/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/EEPROM/src",
+                    "C:/Users/Thomas Bamelis/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/HID/src",
+                    "C:/Users/Thomas Bamelis/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SPI/src",
+                    "C:/Users/Thomas Bamelis/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SoftwareSerial/src",
+                    "C:/Users/Thomas Bamelis/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/Wire/src",
+                    "C:/Users/Thomas Bamelis/.platformio/packages/tool-unity",
+                    ""
+                ]
+            },
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
             "windowsSdkVersion": "10.0.17763.0",
-            "compilerPath": "/usr/bin/avr-gcc",
+            "compilerPath": "\"C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr\\bin\\avr-gcc\"",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "msvc-x64"
+            "intelliSenseMode": "${default}"
         },
         {
             "name": "Linux",
@@ -24,10 +37,9 @@
                 "/home/thomas/Documents/BSFrance/**"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/avr-gcc",
+            "compilerPath": "\"C:/Users/Thomas Bamelis/.platformio/packages/toolchain-atmelavr/bin/avr-gcc.exe\" -mmcu=atmega32u4",
             "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64"
+            "cppStandard": "c++11"
         }
     ],
     "version": 4
