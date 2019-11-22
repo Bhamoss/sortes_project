@@ -35,7 +35,7 @@
                 ]
             },
             "defines": [
-                "PLATFORMIO=40003",
+                "PLATFORMIO=40100",
                 "ARDUINO_AVR_FEATHER32U4",
                 "F_CPU=8000000L",
                 "ARDUINO_ARCH_AVR",

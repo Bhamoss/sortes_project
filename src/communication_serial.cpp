@@ -36,6 +36,7 @@ void readStringFromSerial(char * str , const byte numChars){
             }
         }
     }
+    str[ndx] = '\0';
 }
 
 

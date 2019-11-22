@@ -16,18 +16,22 @@ void setup()
     while (!Serial);
 
     writeStringToSerial("Enter LED status (on/off):");
-    char * answer = (char *) malloc(2);
-    readStringFromSerial(answer,2);
+    char answer[4];
+    
+    readStringFromSerial(answer,4);
+    for(int i = 0; i<4;i++){
+        writeStringToSerial(&answer[i]);
+    }
     char final_message[100];
     
     int result = strcmp(answer,"on");
-    sprintf(final_message,"answer = %s\n comparison = %d",answer,result);
+    sprintf(final_message,"answer = %s\ncomparison = %d",answer,result);
     writeStringToSerial(final_message);
     if ( result == 0){
         
         writeStringToSerial("Enter the blink rate (1-60 sec):");
-        char * blinkrateS = (char *) malloc(2);
-        readStringFromSerial(blinkrateS,2);
+        char blinkrateS[3];
+        readStringFromSerial(blinkrateS,3);
         blinkRate = atoi(blinkrateS);
         
         sprintf(final_message,"You have selected LED on. Blink rate is %d sec",blinkRate);
