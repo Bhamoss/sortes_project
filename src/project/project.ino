@@ -11,10 +11,108 @@
 #include <SPI.h>              
 #include <LoRa.h>
 #include <avr/sleep.h>
+#include <avr/power.h>
+#include <avr/interrupt.h>
 
 /******************************************
  * FreeRTOS setup 
  */
+
+        /*************** task 1 setup 20s receive ********************/
+
+int8_t nb_beacons = 0;
+SemaphoreHandle_t receiving_interruptSemaphore;
+
+ISR(TIMER1_OVF_vect) {
+  /**
+   * Give semaphore in the interrupt handler
+   * https://www.freertos.org/a00124.html
+   */
+  
+  xSemaphoreGiveFromISR(receiving_interruptSemaphore, NULL);
+}
+
+
+/* 
+ * receiving 
+ */
+void receiving(void *pvParameters)
+{
+  (void) pvParameters;
+
+  //pinMode(LED_BUILTIN, OUTPUT);
+
+  for (;;) {
+    
+    /**
+     * Take the semaphore.
+     * https://www.freertos.org/a00122.html
+     */
+    if (xSemaphoreTake(receiving_interruptSemaphore, portMAX_DELAY) == pdPASS) {
+      //digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+      // the receivng task, listening, writing, sending, sleeping
+
+      // bij startup, genereer manueel timer overflow interrupt
+      // DUS zet timer op die interrupt
+      // na 20 keer zet de timer overflow interrupt naar 0
+
+      nb_beacons++;
+      if(nb_beacons == 20){
+        // zet de interupt flag af en disable lora module
+        //TIMSK1 &= ~(_BV(TOIE1));
+        power_timer1_disable() ;
+      }
+    }
+    
+  }
+}
+
+
+
+
+         /*************** task 2 serial input ********************/
+
+
+SemaphoreHandle_t serial_interruptSemaphore;
+
+//TODO which flag
+ISR(PCINT0_vect) {
+  /**
+   * Give semaphore in the interrupt handler
+   * https://www.freertos.org/a00124.html
+   */
+  
+  xSemaphoreGiveFromISR(serial_interruptSemaphore, NULL);
+}
+
+
+/* 
+ * receiving 
+ */
+void serialTask(void *pvParameters)
+{
+  (void) pvParameters;
+
+  //pinMode(LED_BUILTIN, OUTPUT);
+
+  for (;;) {
+    
+    /**
+     * Take the semaphore.
+     * https://www.freertos.org/a00122.html
+     */
+    if (xSemaphoreTake(receiving_interruptSemaphore, portMAX_DELAY) == pdPASS) {
+      //digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+      // the read in 1 2 or 3 and do it
+    }
+    
+  }
+}
+
+
+
+
+
 
 
 /*******************************************
@@ -117,9 +215,67 @@ EDB db(&writer, &reader);
 #define OUR_FREQ 869700000
 
 void setup() {
+  // http://www.gammon.com.au/forum/?id=11497
+  // https://www.nongnu.org/avr-libc/user-manual/group__avr__power.html
+  // TODO disable everything you do not need!
+  //power_all_disable();
+  //power_usb_enable() ;
+  //power_timer1_enable() ;
+  //power_spi_enable();
+  //power_adc_enable();
+
+  
   /***********************************************
    * FreeRTOS setup
    */
+
+  /************************** receiving **************************/
+
+
+  // Create task for receiving 
+  xTaskCreate(receiving, // Task function
+              "Receiving", // Task name
+              1024, // Stack size 
+              NULL, 
+              0, // Priority
+              NULL );
+
+
+  //TODO manually configure timer
+
+  
+  /**
+   * Create a binary semaphore.
+   * https://www.freertos.org/xSemaphoreCreateBinary.html
+   */
+  receiving_interruptSemaphore = xSemaphoreCreateBinary();
+  if (receiving_interruptSemaphore != NULL) {
+    // TODO Attach interrupt for timer
+    //attachInterrupt(digitalPinToInterrupt(2), receiving_interruptHandler, LOW);
+    // this is now done by the isr
+  }
+
+  /************************** serial **************************/
+  /**
+   * Create a binary semaphore.
+   * https://www.freertos.org/xSemaphoreCreateBinary.html
+   */
+
+
+  // Create task for receiving 
+  xTaskCreate(serialTask, // Task function
+              "Serial", // Task name
+              1024, // Stack size 
+              NULL, 
+              0, // Priority
+              NULL );
+
+   
+  serial_interruptSemaphore = xSemaphoreCreateBinary();
+  if (serial_interruptSemaphore != NULL) {
+    // TODO Attach interrupt for serial ASYNCHRONOUS
+    //attachInterrupt(digitalPinToInterrupt(2), serial_interruptHandler, LOW);
+  }
 
 
   /**********************************************
@@ -147,7 +303,13 @@ void setup() {
 
   // start serial only when you need it?
 
-  //TODO go to sleep after setup
+
+  
+
+  
+  //TODO set timer op 1 seconde om tijd te geven om in slaap te vallen
+  // setTimer(1000ms);
+  low_power();
 }
 
 void loop() {
@@ -190,15 +352,18 @@ their state in sleep mode.
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   cli(); // safely disable interrupts
   sleep_enable();
-  byte adcsra = ADCSRA;                     //save ADCSRA
-  byte adcsrb = ADCSRB;                     //save ADCSRB
-  ADCSRA &= ~_BV(ADEN);                     //disable ADC
+  //byte adcsra = ADCSRA;                     //save ADCSRA
+  //byte adcsrb = ADCSRB;                     //save ADCSRB
+  //ADCSRA &= ~_BV(ADEN);                     //disable ADC
   //sleep_bod_disable(); // brown out disable
   sei(); // enable interrupts AFTER execution of next line
   sleep_cpu();
   // the next is executed when you come back to sleep
   // so shit that always needs to be reenabled you have to put here
   sleep_disable();
-  ADCSRA = adcsra;                          //restore ADCSRA
-  ADCSRB = adcsrb;                          //restore ADCSRB
+  //TODO save 2,56 votl?
+  //ADCSRA = adcsra;                          //restore ADCSRA
+  //ADCSRB = adcsrb;                          //restore ADCSRB
 }
+// http://www.gammon.com.au/forum/?id=11497
+//
