@@ -68,19 +68,20 @@ void receiving(void *pvParameters)
   //pinMode(LED_BUILTIN, OUTPUT);
 
   for (;;) {
-    
     /**
      * Take the semaphore.
      * https://www.freertos.org/a00122.html
      */
     if (xSemaphoreTake(receiving_interruptSemaphore, portMAX_DELAY) == pdPASS) {
       //digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-      // the receivng task, listening, writing, sending, sleeping
+      // the receiving task, listening, writing, sending, sleeping
 
       // bij startup, genereer manueel timer overflow interrupt
       // DUS zet timer op die interrupt
-      // na 20 keer zet de timer overflow interrupt naar 0
 
+      // na 20 keer zet de timer overflow interrupt naar 0
+      while(!LoRa.available());
+      onReceive(LoRa.parsePacket());
       nb_beacons++;
       if(nb_beacons == 20){
         // zet de interupt flag af en disable lora module
@@ -90,6 +91,34 @@ void receiving(void *pvParameters)
     }
     
   }
+}
+
+void onReceive(int packetSize){
+   if (packetSize == 0) return;
+   String msg = "";
+   while(LoRa.available()) {
+      msg += (char) LoRa.read();
+   }
+   int seconds = msg.substring(4).toInt();
+   int temp = get_temp();
+   LogEvent record;
+   record.temp = static_cast<char>(temp);
+   record.next_wake_up_time = seconds;
+   //Take sem here
+   EDB_Status status = db.appendRec(EDB_REC record);
+   if (status == EDB_TABLE_FULL){
+    db.deleteRec(0);
+    db.appendRec(EDB_REC record);
+   }
+   // give sem
+   sendMessage(record.temp);
+}
+
+
+void sendMessage(char temp){
+  LoRa.beginPacket();
+  LoRa.print(temp);
+  LoRa.endPacket();
 }
 
 
