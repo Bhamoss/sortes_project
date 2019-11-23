@@ -294,9 +294,9 @@ Shall be cleared by software (USB clock inputs must be enabled before). Setting 
     #if (DEBUGGING == 1)
         Serial.println("serial isr");
         //delay(2000);
-    #else
-     xSemaphoreGiveFromISR(serial_interruptSemaphore, NULL);
     #endif
+    xSemaphoreGiveFromISR(serial_interruptSemaphore, NULL);
+    
   }
 
 
@@ -310,7 +310,7 @@ void serialTask(void *pvParameters)
 
   for (;;) {
     
-    if (xSemaphoreTake(receiving_interruptSemaphore, portMAX_DELAY) == pdPASS) {
+    if (xSemaphoreTake(serial_interruptSemaphore, portMAX_DELAY) == pdPASS) {
       while(Serial.available()){ 
         char command = Serial.read();
         if(command == '1'){
@@ -360,7 +360,7 @@ void serialTask(void *pvParameters)
         Serial.println("serial ulta deep");
         delay(2000);
       #endif
-      //ultra_low_power();
+      ultra_low_power();
     }
     
   }
@@ -605,6 +605,7 @@ void low_power(){
 
   #if (DEBUGGING == 1)
     Serial.println("putting lora to low sleep");
+    delay(100);
   #endif
     
     LoRa.sleep();
