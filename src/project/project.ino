@@ -13,7 +13,20 @@
 #include <avr/sleep.h>
 #include <avr/power.h>
 #include <avr/interrupt.h>
+#include <avr/wdt.h>
 
+#define POWER_OPT_LEVEL 0
+
+
+/*******************************
+ * Timer setup
+ */
+
+// wait twice and save remaing x - 8,6 seconds for second round of waiting
+
+void setTimer(uint16_t msecs){
+  TCNT1 = 2^16 -  (uint16_t) (7,8125 * msecs);
+}
 
 
 /*****************************************
@@ -287,14 +300,31 @@ EDB db(&writer, &reader);
 #define OUR_FREQ 869700000
 
 void setup() {
+
+  #if (POWER_OPT_LEVEL >= 5)
+    clock_prescale_set(clock_div_128);
+  #endif
+
+  #if (POWER_OPT_LEVEL >= 3)
+      //wdt disable
+      wdt_disable();
+    #endif
+
+  #if (POWER_OPT_LEVEL >= 3)
+      //jtag disable
+      MCUCR &= ~(_BV(JTD))
+    #endif
+  
   // http://www.gammon.com.au/forum/?id=11497
   // https://www.nongnu.org/avr-libc/user-manual/group__avr__power.html
   // TODO disable everything you do not need!
-  //power_all_disable();
-  //power_usb_enable() ;
-  //power_timer1_enable() ;
-  //power_spi_enable();
-  //power_adc_enable();
+  #if (POWER_OPT_LEVEL >= 2)
+    power_all_disable();
+  //power_usb_enable() ; not necessary in phase 1
+    power_timer1_enable() ;
+    power_spi_enable();
+    power_adc_enable();
+  #endif
 
   
   /***********************************************
@@ -387,9 +417,23 @@ void setup() {
 
   sleep_semaphore = xSemaphoreCreateBinary();
   xSemaphoreGive(database_semaphore);
+
+  /**************************************
+   * Timer setup
+   */
+
+   TCCR1A = 0; // geen compare mode
+   TCCR1B =  _BV(CS12)| _BV(CS10) ;//  CS12/1/0 = 101 -> 1024 prescaler en 8 Mhz (125 nanoseconds voor 1 wave zonder prescaler) -> 125*1024 nanoseconds voor 1 increment -> 128 micro seconds = 0,128 ms
+   // 7.8125 ticks per ms -> 7812,5 per seconde en 65536 increments -> ongeveer 8,6 seconden max
+   // dus als x aantal seconden  = max{0, 65536 - 7812,5 * x}  -> sowieso wakker na 8,6 seconden.
+   TIMSK1 = _BV(TOIE1); // timer overflow bit interrupt enabled
   
   //TODO set timer op 1 seconde om tijd te geven om in slaap te vallen
   // setTimer(1000ms);
+
+  setTimer(100);
+  
+  // low power has interupts enabled when it exits (no need to call it here)
   low_power();
 }
 
@@ -400,20 +444,33 @@ void loop() {
 
 void low_power(){
   if (xSemaphoreTake(sleep_semaphore, portMAX_DELAY) == pdTRUE) {
-    //TODO figure out how to make this as low as possible
-    //TODO turn of usb during setup?
-    // TODO peripherals disable
-    // TODO mutex op in slaap gaan?
-    //TODO turn of ADC of temp an reenable when reading temp
     LoRa.sleep();
     set_sleep_mode(SLEEP_MODE_STANDBY); // we have interrupt on the clock running
     // DISABLE OTHER TASK SO YOU DO NOT GO INTO POWER DOWN AND MISS CLOCK
     cli(); // safely disable interrupts
+    
+    //LoRa.sleep(); do it after you get the 20th packet
+    #if (POWER_OPT_LEVEL >= 2)
+      power_all_disable();
+      power_timer1_enable() ;
+      power_spi_enable();
+      power_adc_enable();
+    #endif
+    
     sleep_enable();
-  //  sleep_bod_disable(); // brown out disable
+    
+    #if (POWER_OPT_LEVEL >= 1)
+      //sleep_bod_disable(); // brown out disable
+      // you have to set fuses with avrdude for bod disable
+    #endif
     sei(); // enable interrupts AFTER execution of next line
     sleep_cpu();
     sleep_disable();
+    #if (POWER_OPT_LEVEL >= 2)
+      power_spi_enable();
+      power_adc_enable();
+    #endif
+    
   }
   xSemaphoreGive(sleep_semaphore);
 }
@@ -422,10 +479,8 @@ void low_power(){
 // zie pagina  45
 void ultra_low_power(){
   if (xSemaphoreTake(sleep_semaphore, portMAX_DELAY) == pdTRUE) {
-    //TODO figure out how to make this as low as possible
-    //TODO turn of usb during setup?
-    // TODO peripherals disable
-    // TODO mutex op in slaap gaan?
+    //TODO port pin registers should be 0 to not consume power
+    // TODO disable brown out fuses
     /**
      *  Turn it off if you are not using it, e.g. LEDs, ADC, Clocks, Brown out
   Detection (BoD) and Peripherals.
@@ -433,14 +488,25 @@ void ultra_low_power(){
   their state in sleep mode.
 
     */
-    LoRa.sleep();
+
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     cli(); // safely disable interrupts
+
+    //LoRa.sleep(); do it after you get the 20th packet
+    #if (POWER_OPT_LEVEL >= 2)
+      power_all_disable();
+      power_usb_enable();
+      //power_usi_enable() ;
+    #endif
+    
     sleep_enable();
-    //byte adcsra = ADCSRA;                     //save ADCSRA
-    //byte adcsrb = ADCSRB;                     //save ADCSRB
-    //ADCSRA &= ~_BV(ADEN);                     //disable ADC
-    //sleep_bod_disable(); // brown out disable
+
+    
+    
+    #if (POWER_OPT_LEVEL >= 1)
+      //sleep_bod_disable(); // brown out disable does not work for our processor
+      // you have to set fuses with avrdude for bod disable
+    #endif
     sei(); // enable interrupts AFTER execution of next line
     sleep_cpu();
     // the next is executed when you come back to sleep
@@ -449,6 +515,11 @@ void ultra_low_power(){
     //TODO save 2,56 votl?
     //ADCSRA = adcsra;                          //restore ADCSRA
     //ADCSRB = adcsrb;                          //restore ADCSRB
+    #if (POWER_OPT_LEVEL >= 2)
+    //byte adcsra = ADCSRA;                     //save ADCSRA
+    //byte adcsrb = ADCSRB;                     //save ADCSRB
+    //ADCSRA &= ~_BV(ADEN);                     //disable ADC
+    #endif
   }
   xSemaphoreGive(sleep_semaphore);
 }
