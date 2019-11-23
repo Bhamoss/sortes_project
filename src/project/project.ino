@@ -14,6 +14,18 @@
 #include <avr/power.h>
 #include <avr/interrupt.h>
 
+
+
+/*****************************************
+ * Sleeping setup
+ **/
+
+SemaphoreHandle_t sleep_semaphore;
+
+void ultra_low_power();
+void low_power();
+
+
 /******************************************
  * FreeRTOS setup 
  */
@@ -76,7 +88,20 @@ void receiving(void *pvParameters)
 SemaphoreHandle_t serial_interruptSemaphore;
 
 //TODO which flag
-ISR(PCINT0_vect) {
+// there are 2 async usb flags, VBUSI = voltage over bus change aka unplugging or plugging I think
+// and WAKEUPI
+/***
+ * There are no relationship between the SUSPI interrupt and the WAKEUPI interrupt: the WAKEUPI interrupt is
+triggered as soon as there are non-idle patterns on the data lines. Thus, the WAKEUPI interrupt can occurs
+even if the controller is not in the “suspend” mode.
+When the WAKEUPI interrupt is triggered, if the SUSPI interrupt bit was already set, it is cleared by hardware.
+When the SUSPI interrupt is triggered, if the WAKEUPI interrupt bit was already set, it is cleared by hardware.
+Set by hardware when the USB controller is re-activated by a filtered non-idle signal from the lines (not by an
+upstream resume). This triggers an interrupt if WAKEUPE is set.
+Shall be cleared by software (USB clock inputs must be enabled before). Setting by software has no effect.
+
+ */
+ISR(WAKEUPI) {
   /**
    * Give semaphore in the interrupt handler
    * https://www.freertos.org/a00124.html
@@ -104,6 +129,52 @@ void serialTask(void *pvParameters)
     if (xSemaphoreTake(receiving_interruptSemaphore, portMAX_DELAY) == pdPASS) {
       //digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
       // the read in 1 2 or 3 and do it
+      if(Serial.available()){ // zou overbodig moeten zijn
+        char command = Serial.read();
+        if(command == '1'){
+          if (xSemaphoreTake(database_semaphore, portMAX_DELAY) == pdTRUE) {
+            if(db.count() != 0){
+              db.readRec(db.count(), EDB_REC logEvent);
+              Serial.print(logEvent.temp); Serial.print(" degrees at "); Serial.println(logEvent.next_wake_up_time);
+              if(db.limit() == db.count()){
+                Serial.println("WARNING: database full.");
+              }
+            }
+            else
+            {
+              Serial.println("Table empty");
+            }
+          }
+          xSemaphoreGive(database_semaphore);
+        }
+        else if(command == '2'){
+          if (xSemaphoreTake(database_semaphore, portMAX_DELAY) == pdTRUE) {
+            if(db.count() == 0){
+              Serial.println("Database empty.");
+            }
+            for (int recno = 1; recno <= db.count(); recno++)
+            {
+              db.readRec(recno, EDB_REC logEvent);
+              Serial.print(logEvent.temp); Serial.print(" degrees at "); Serial.println(logEvent.next_wake_up_time);
+            }
+            if(db.limit() == db.count()){
+              Serial.println("WARNING: database full.");
+            }
+          }
+          xSemaphoreGive(database_semaphore);
+        }
+        else if(command == '3'){
+          Serial.println("Entering ultra low power mode.");
+          // this happens always?
+        }
+        else if(command == '\n'){
+          Serial.println("EOL character included in transmission."); // TODO delete this line
+        }
+        else{
+          Serial.println("Illegal command.");
+        }
+      }
+      ultra_low_power();
     }
     
   }
@@ -158,6 +229,7 @@ void temp_setup(){
 /******************************
  * Database setup
  */
+SemaphoreHandle_t database_semaphore;
 
 // 1024 bytes eeprom
 #define TABLE_SIZE 1024
@@ -294,6 +366,9 @@ void setup() {
   #else 
     db.open(0);
   #endif
+  
+  database_semaphore = xSemaphoreCreateBinary(); // sempahore always created empty so give
+  xSemaphoreGive(database_semaphore);
   /**********************************************
    * LoRa setup
    */
@@ -303,9 +378,15 @@ void setup() {
 
   // start serial only when you need it?
 
+  Serial.begin(9600);
+  while(!Serial);
+  UDIEN |= _BV(WAKEUPE); // for the WAKEUPE interrupt
+  // usb_disable()
 
   
 
+  sleep_semaphore = xSemaphoreCreateBinary();
+  xSemaphoreGive(database_semaphore);
   
   //TODO set timer op 1 seconde om tijd te geven om in slaap te vallen
   // setTimer(1000ms);
@@ -318,52 +399,66 @@ void loop() {
 
 
 void low_power(){
-  //TODO figure out how to make this as low as possible
-  //TODO turn of usb during setup?
-  // TODO peripherals disable
-  // TODO mutex op in slaap gaan?
-  //TODO turn of ADC of temp an reenable when reading temp
-  LoRa.sleep();
-  set_sleep_mode(SLEEP_MODE_STANDBY); // we have interrupt on the clock running
-  // DISABLE OTHER TASK SO YOU DO NOT GO INTO POWER DOWN AND MISS CLOCK
-  cli(); // safely disable interrupts
-  sleep_enable();
-//  sleep_bod_disable(); // brown out disable
-  sei(); // enable interrupts AFTER execution of next line
-  sleep_cpu();
-  sleep_disable();
+  if (xSemaphoreTake(sleep_semaphore, portMAX_DELAY) == pdTRUE) {
+    //TODO figure out how to make this as low as possible
+    //TODO turn of usb during setup?
+    // TODO peripherals disable
+    // TODO mutex op in slaap gaan?
+    //TODO turn of ADC of temp an reenable when reading temp
+    LoRa.sleep();
+    set_sleep_mode(SLEEP_MODE_STANDBY); // we have interrupt on the clock running
+    // DISABLE OTHER TASK SO YOU DO NOT GO INTO POWER DOWN AND MISS CLOCK
+    cli(); // safely disable interrupts
+    sleep_enable();
+  //  sleep_bod_disable(); // brown out disable
+    sei(); // enable interrupts AFTER execution of next line
+    sleep_cpu();
+    sleep_disable();
+  }
+  xSemaphoreGive(sleep_semaphore);
 }
 
 
 // zie pagina  45
 void ultra_low_power(){
-  //TODO figure out how to make this as low as possible
-  //TODO turn of usb during setup?
-  // TODO peripherals disable
-  // TODO mutex op in slaap gaan?
-  /**
-   *  Turn it off if you are not using it, e.g. LEDs, ADC, Clocks, Brown out
-Detection (BoD) and Peripherals.
- Deterministic state beats undefined state. Floating pins leach energy, so set
-their state in sleep mode.
+  if (xSemaphoreTake(sleep_semaphore, portMAX_DELAY) == pdTRUE) {
+    //TODO figure out how to make this as low as possible
+    //TODO turn of usb during setup?
+    // TODO peripherals disable
+    // TODO mutex op in slaap gaan?
+    /**
+     *  Turn it off if you are not using it, e.g. LEDs, ADC, Clocks, Brown out
+  Detection (BoD) and Peripherals.
+  Deterministic state beats undefined state. Floating pins leach energy, so set
+  their state in sleep mode.
 
-   */
-  LoRa.sleep();
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-  cli(); // safely disable interrupts
-  sleep_enable();
-  //byte adcsra = ADCSRA;                     //save ADCSRA
-  //byte adcsrb = ADCSRB;                     //save ADCSRB
-  //ADCSRA &= ~_BV(ADEN);                     //disable ADC
-  //sleep_bod_disable(); // brown out disable
-  sei(); // enable interrupts AFTER execution of next line
-  sleep_cpu();
-  // the next is executed when you come back to sleep
-  // so shit that always needs to be reenabled you have to put here
-  sleep_disable();
-  //TODO save 2,56 votl?
-  //ADCSRA = adcsra;                          //restore ADCSRA
-  //ADCSRB = adcsrb;                          //restore ADCSRB
+    */
+    LoRa.sleep();
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    cli(); // safely disable interrupts
+    sleep_enable();
+    //byte adcsra = ADCSRA;                     //save ADCSRA
+    //byte adcsrb = ADCSRB;                     //save ADCSRB
+    //ADCSRA &= ~_BV(ADEN);                     //disable ADC
+    //sleep_bod_disable(); // brown out disable
+    sei(); // enable interrupts AFTER execution of next line
+    sleep_cpu();
+    // the next is executed when you come back to sleep
+    // so shit that always needs to be reenabled you have to put here
+    sleep_disable();
+    //TODO save 2,56 votl?
+    //ADCSRA = adcsra;                          //restore ADCSRA
+    //ADCSRB = adcsrb;                          //restore ADCSRB
+  }
+  xSemaphoreGive(sleep_semaphore);
 }
 // http://www.gammon.com.au/forum/?id=11497
 //
+
+void vApplicationIdleHook( void ){
+  // should never be entered
+  // could turn on led if we ever enter this to check
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+  //ultra_low_power();
+}
